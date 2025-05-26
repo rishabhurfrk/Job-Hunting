@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Apple-inspired Light Theme */
+    --background: 0 0% 97%; /* Off-white, similar to Apple's light backgrounds */
+    --foreground: 0 0% 10%; /* Dark gray for text */
+    --card: 0 0% 100%; /* White cards */
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 210 100% 50%; /* Vibrant blue - Apple's typical accent */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --secondary: 0 0% 90%; /* Light gray for secondary elements */
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 85%; /* Lighter gray for muted text/elements */
+    --muted-foreground: 0 0% 40%;
+    --accent: 210 100% 50%; /* Same as primary */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%; /* Standard red for destructive actions */
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 87%; /* Subtle border color */
+    --input: 0 0% 95%; /* Light gray input background */
+    --ring: 210 100% 50%; /* Blue ring for focus */
+    --radius: 0.5rem; /* Slightly reduced radius for a cleaner look */
+  }
+
+  .dark {
+    /* Apple-inspired Dark Theme */
+    --background: 0 0% 8%; /* Very dark gray, almost black */
+    --foreground: 0 0% 90%; /* Light gray for text */
+    --card: 0 0% 12%; /* Darker gray for cards */
+    --card-foreground: 0 0% 90%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 210 100% 55%; /* Slightly brighter blue for dark mode contrast */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 15%; /* Dark gray for secondary elements */
+    --secondary-foreground: 0 0% 80%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 210 100% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%; /* Darker border */
+    --input: 0 0% 18%; /* Dark gray input background */
+    --ring: 210 100% 55%;
+  }
+
+  * {
+    @apply border-border;
+    font-family: 'Inter', sans-serif; /* Changed default font to Inter */
+  }
+
+  body {
+    @apply text-foreground bg-background;
+    -webkit-font-smoothing: antialiased; /* Smoother fonts on WebKit */
+    -moz-osx-font-smoothing: grayscale; /* Smoother fonts on Firefox */
+    min-height: 100vh;
+  }
+}
+
+/* Simplified and more subtle interaction styles */
+@layer utilities {
+  .apple-focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+  }
+
+  .apple-card-style {
+    @apply rounded-xl shadow-sm border border-border;
+  }
+
+  /* Commented out nvidia-glow, nvidia-border-gradient and animate-pulse-glow */
+  /*
+  .nvidia-glow {
+    transition: all 0.3s ease;
+    box-shadow: 0 0 8px rgba(33, 114, 229, 0.2);
+  }
+
+  .nvidia-glow:hover {
+    box-shadow: 0 0 15px rgba(33, 114, 229, 0.4), 0 0 25px rgba(33, 114, 229, 0.2);
+  }
+  .nvidia-border-gradient {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid transparent;
+  }
+
+  .nvidia-border-gradient::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent,
+      hsl(var(--primary) / 0.3),
+      transparent
+    );
+    animation: rotate 6s linear infinite;
+    z-index: -1;
+  }
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-subtle 2.5s infinite;
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% {
+      box-shadow: 0 0 3px hsl(var(--primary) / 0.1);
+    }
+    50% {
+      box-shadow: 0 0 10px hsl(var(--primary) / 0.2);
+    }
+  }
+  */
+}
