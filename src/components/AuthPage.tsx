@@ -18,7 +18,7 @@ const AuthPage = () => {
     fullName: '',
   });
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,6 +51,23 @@ const AuthPage = () => {
         variant: "destructive",
       });
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      const expectedRole = isAdmin ? 'admin' : 'user';
+      const { error } = await signInWithGoogle(expectedRole);
+      if (error) throw error;
+      // Success toast is not needed here as the page will redirect to Google
+    } catch (error: any) {
+      toast({
+        title: "Authentication Error",
+        description: error.message,
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
@@ -186,7 +203,32 @@ const AuthPage = () => {
                 {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
               </Button>
 
-              <div className="text-center">
+              {/* Google Sign-In Button */}
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/30" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                </div>
+              </div>
+
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full nvidia-glow flex items-center justify-center gap-2 bg-background border-border/20"
+              >
+              <img
+                src="/google.svg"
+                alt="Google"
+                className="w-5 h-5"
+              />
+              <span>Google</span>
+              </Button>
+
+              <div className="text-center mt-4">
                 <button
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}

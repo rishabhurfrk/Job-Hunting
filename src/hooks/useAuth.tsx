@@ -10,6 +10,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string, expectedRole: string) => Promise<any>;
   signUp: (email: string, password: string, fullName: string, role?: string) => Promise<any>;
+  signInWithGoogle: (expectedRole: string) => Promise<any>;
   signOut: () => Promise<void>;
 }
 
@@ -103,6 +104,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { data, error };
   };
 
+  const signInWithGoogle = async (expectedRole: string) => {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+        redirectTo: window.location.origin,
+      },
+    });
+    
+    // Note: Role checking will happen after the OAuth redirect and user creation
+    // We can't check the role here because the user isn't created yet
+    
+    return { data, error };
+  };
+
   const signUp = async (email: string, password: string, fullName: string, role: string = 'user') => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -128,6 +147,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     loading,
     signIn,
     signUp,
+    signInWithGoogle,
     signOut,
   };
 
