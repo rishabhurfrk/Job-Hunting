@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import JobCard from './JobCard';
-import { Plus, LogOut, Briefcase } from 'lucide-react';
+import { Plus, LogOut, Briefcase, Users, Activity, BarChart } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -27,12 +27,20 @@ const AdminDashboard = () => {
     job_type: '',
     experience_required: '',
   });
+  const [analytics, setAnalytics] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    totalApplications: 0,
+    jobApplicationStats: [] as {job_title: string, company: string, count: number}[],
+  });
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   const { signOut, profile, user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     fetchJobs();
+    fetchAnalytics();
   }, []);
 
   const fetchJobs = async () => {
@@ -46,6 +54,79 @@ const AdminDashboard = () => {
       setJobs(data || []);
     } catch (error) {
       console.error('Error fetching jobs:', error);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      // Get total registered users
+      const { count: totalUsers, error: userError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+      
+      if (userError) throw userError;
+      
+      // Get active users (users who registered or updated profile in the last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const formattedDate = thirtyDaysAgo.toISOString();
+      
+      const { count: activeUsers, error: activeUserError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .gte('updated_at', formattedDate);
+      
+      if (activeUserError) throw activeUserError;
+      
+      // Get jobs created in the last 30 days (as a substitute for application activity)
+      const { count: recentJobs, error: recentJobsError } = await supabase
+        .from('job_listings')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', formattedDate);
+      
+      if (recentJobsError) throw recentJobsError;
+      
+      // Get job statistics by company
+      const { data: jobsByCompany, error: companyError } = await supabase
+        .from('job_listings')
+        .select('company_name')
+        .order('created_at', { ascending: false });
+        
+      if (companyError) throw companyError;
+      
+      // Process company statistics
+      const companyStats: Record<string, number> = {};
+      jobsByCompany?.forEach(job => {
+        const company = job.company_name || 'Unknown';
+        companyStats[company] = (companyStats[company] || 0) + 1;
+      });
+      
+      // Convert to array and sort
+      const topCompanies = Object.entries(companyStats)
+        .map(([company, count]) => ({ company, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+      
+      setAnalytics({
+        totalUsers: totalUsers || 0,
+        activeUsers: activeUsers || 0,
+        totalApplications: 0, // We don't have this data
+        jobApplicationStats: topCompanies.map(item => ({
+          job_title: `${item.count} jobs`,
+          company: item.company,
+          count: item.count
+        })),
+      });
+    } catch (error: any) {
+      console.error('Error fetching analytics:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load analytics data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingAnalytics(false);
     }
   };
 
@@ -199,6 +280,87 @@ const AdminDashboard = () => {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+        {/* Analytics Dashboard Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-foreground mb-4">Dashboard Analytics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Total Users Card */}
+            <Card className="bg-card border-border/20 nvidia-glow">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <Users className="mr-2 h-5 w-5" /> User Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingAnalytics ? (
+                  <p className="text-muted-foreground text-sm">Loading...</p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Total Registered:</span>
+                      <span className="font-medium">{analytics.totalUsers}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Active Users (30d):</span>
+                      <span className="font-medium">{analytics.activeUsers}</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Applications Card */}
+            <Card className="bg-card border-border/20 nvidia-glow">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <Activity className="mr-2 h-5 w-5" /> Job Creation Analytics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingAnalytics ? (
+                  <p className="text-muted-foreground text-sm">Loading...</p>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-muted-foreground">Recent Jobs:</span>
+                      <span className="font-medium">{analytics.jobApplicationStats.length > 0 ? analytics.jobApplicationStats[0].count : 0}</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Popular Jobs Card */}
+            <Card className="bg-card border-border/20 nvidia-glow">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <BarChart className="mr-2 h-5 w-5" /> Top Companies
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingAnalytics ? (
+                  <p className="text-muted-foreground text-sm">Loading...</p>
+                ) : analytics.jobApplicationStats.length > 0 ? (
+                  <div className="space-y-2 text-sm">
+                    {analytics.jobApplicationStats.map((stat, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <span className="text-muted-foreground truncate" title={stat.company}>
+                          {stat.company.length > 20 
+                            ? stat.company.substring(0, 20) + '...' 
+                            : stat.company}
+                        </span>
+                        <span className="font-medium">{stat.count} jobs</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No job listings yet</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="bg-card border-border/20 nvidia-glow">
