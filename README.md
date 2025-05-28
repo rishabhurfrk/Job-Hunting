@@ -47,7 +47,17 @@ A modern, full-stack job portal application built with **React**, **TypeScript**
 ---
 
 ## 📁 Project Structure
-Job-Hunting/ ├── src/ │ ├── components/ # React components (JobCard, UserDashboard, AdminDashboard, etc.) │ ├── hooks/ # Custom hooks (useAuth, use-toast) │ ├── integrations/ │ │ └── supabase/ # Supabase client and types │ └── ... # Other source files ├── public/ # Static assets (logo, icons) ├── package.json ├── README.md └── ...
+Job-Hunting/
+├── src/
+│   ├── components/         # React components (JobCard, UserDashboard, AdminDashboard, etc.)
+│   ├── hooks/              # Custom hooks (useAuth, use-toast)
+│   ├── integrations/
+│   │   └── supabase/       # Supabase client and types
+│   └── ...                 # Other source files
+├── public/                 # Static assets (logo, icons)
+├── package.json
+├── README.md
+└── ...
 
 
 ---
