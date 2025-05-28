@@ -100,8 +100,11 @@ const UserDashboard = () => {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 justify-center px-2 sm:px-0">
           {jobs.map((job) => (
-            <div key={job.id} className="flex justify-center">
-              <JobCard job={job} />
+            <div key={job.id} className="flex justify-center w-full">
+              <JobCard 
+                job={job} 
+                showAdminActions={false}
+              />
             </div>
           ))}
         </div>

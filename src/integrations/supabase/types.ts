@@ -9,6 +9,43 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      job_applications: {
+        Row: {
+          id: string
+          job_id: string
+          user_id: string
+          applied_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          job_id: string
+          user_id: string
+          applied_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          job_id?: string
+          user_id?: string
+          applied_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_id_fkey"
+            columns: ["job_id"]
+            referencedRelation: "job_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_applications_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       job_listings: {
         Row: {
           apply_link: string

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +25,7 @@ const AdminDashboard = () => {
     location: '',
     salary_range: '',
     job_type: '',
+    experience_required: '',
   });
 
   const { signOut, profile, user } = useAuth();
@@ -102,6 +104,7 @@ const AdminDashboard = () => {
       location: job.location || '',
       salary_range: job.salary_range || '',
       job_type: job.job_type || '',
+      experience_required: job.experience_required || '',
     });
     setShowForm(true);
   };
@@ -141,6 +144,7 @@ const AdminDashboard = () => {
       location: '',
       salary_range: '',
       job_type: '',
+      experience_required: '',
     });
     setEditingJob(null);
     setShowForm(false);
@@ -306,11 +310,29 @@ const AdminDashboard = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="job_type">Job Type</Label>
-                    <Input
-                      id="job_type"
+                    <Select
                       value={formData.job_type}
-                      onChange={(e) => setFormData({...formData, job_type: e.target.value})}
-                      placeholder="e.g. Full-time, Part-time"
+                      onValueChange={(value) => setFormData({...formData, job_type: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select job type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Full-time">Full-time</SelectItem>
+                        <SelectItem value="Part-time">Part-time</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="experience_required">Experience Required</Label>
+                    <Input
+                      id="experience_required"
+                      value={formData.experience_required}
+                      onChange={(e) => setFormData({...formData, experience_required: e.target.value})}
+                      placeholder="e.g. 2+ years"
                     />
                   </div>
                 </div>
