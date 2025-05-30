@@ -1,79 +1,77 @@
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { ThemeProvider } from "./components/ThemeProvider";
+import { ThemeToggle } from "./components/ThemeToggle";
+import UserDashboard from './components/UserDashboard';
+import AdminDashboard from './components/AdminDashboard';
+import AuthPage from './components/AuthPage';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { Toaster } from '@/components/ui/toaster';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/hooks/useAuth";
-import AuthPage from "./components/AuthPage";
-import AdminDashboard from "./components/AdminDashboard";
-import UserDashboard from "./components/UserDashboard";
+const ProtectedRoute = ({ children, adminOnly }: { children: JSX.Element, adminOnly?: boolean }) => {
+  const { user, profile, loading } = useAuth();
 
-const queryClient = new QueryClient();
-
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
-  
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <div>Loading...</div>; 
   }
-  
+
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/auth" />;
+  }
+
+  if (adminOnly && profile?.role !== 'admin') {
+    return <Navigate to="/dashboard" />;
   }
   
-  return <>{children}</>;
+  if (!adminOnly && profile?.role === 'admin' && window.location.pathname === '/dashboard') {
+    // This condition is a bit tricky, ideally handled by a root-level redirect or a dedicated / route
+  } else if (!adminOnly && profile?.role !== 'admin' && window.location.pathname === '/admin') {
+     return <Navigate to="/dashboard" />;
+  }
+
+  return children;
 };
 
-const AppContent = () => {
-  const { user, profile, loading } = useAuth();
-  
+const AppRoutes = () => {
+  const { profile, loading } = useAuth();
+
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
     <Routes>
-      <Route path="/auth" element={!user ? <AuthPage /> : <Navigate to="/" replace />} />
+      <Route path="/auth" element={<AuthPage />} />
       <Route 
-        path="/" 
+        path="/dashboard"
         element={
           <ProtectedRoute>
-            {profile?.role === 'admin' ? <AdminDashboard /> : <UserDashboard />}
+            {profile?.role === 'admin' ? <Navigate to="/admin" /> : <UserDashboard />}
           </ProtectedRoute>
-        } 
+        }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route 
+        path="/admin"
+        element={<ProtectedRoute adminOnly={true}><AdminDashboard /></ProtectedRoute>}
+      />
+      <Route path="*" element={<Navigate to={profile?.role === 'admin' ? "/admin" : "/dashboard"} />} /> 
     </Routes>
   );
-};
+}
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <Router>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <div className="fixed top-4 right-4 z-50">
+          <ThemeToggle />
+        </div>
         <AuthProvider>
-          <AppContent />
+          <AppRoutes />
         </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </ThemeProvider>
+    </Router>
+  );
+}
 
 export default App;

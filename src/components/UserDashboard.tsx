@@ -5,7 +5,12 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import JobCard from './JobCard';
-import { Search, Briefcase, LogOut, Filter } from 'lucide-react';
+import { Search, Briefcase, LogOut, Filter, X } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { JobFilters, FilterType, FilterOperator, JobFilter } from './JobFilters';
+import { nanoid } from 'nanoid';
 
 // Helper function to group jobs by date
 const groupJobsByDate = (jobs: any[]) => {
@@ -50,6 +55,21 @@ const UserDashboard = () => {
   const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [jobFilters, setJobFilters] = useState<JobFilter[]>([]);
+  console.log('UserDashboard rendering. showFilters is currently:', showFilters);
+  
+  // Filter states
+  const [locationFilter, setLocationFilter] = useState<string[]>([]);
+  const [experienceFilter, setExperienceFilter] = useState<string[]>([]);
+  const [jobTypeFilter, setJobTypeFilter] = useState<string[]>([]);
+  const [salaryFilter, setSalaryFilter] = useState<string[]>([]);
+  
+  // Unique filter options
+  const [locations, setLocations] = useState<string[]>([]);
+  const [experiences, setExperiences] = useState<string[]>([]);
+  const [jobTypes, setJobTypes] = useState<string[]>([]);
+  const [salaryRanges, setSalaryRanges] = useState<string[]>([]);
 
   const { signOut, profile } = useAuth();
 
@@ -58,15 +78,74 @@ const UserDashboard = () => {
   }, []);
 
   useEffect(() => {
-    // Filter jobs based on search term
-    const filtered = jobs.filter(job =>
+    // Extract unique filter options from jobs
+    if (jobs.length > 0) {
+      console.log('Jobs data:', jobs);
+      
+      const uniqueLocations = [...new Set(jobs.filter(job => job.location).map(job => job.location.trim()))];
+      console.log('Unique locations:', uniqueLocations);
+      setLocations(uniqueLocations);
+      
+      const uniqueExperiences = [...new Set(jobs.filter(job => job.experience_required).map(job => job.experience_required))];
+      console.log('Unique experiences:', uniqueExperiences);
+      setExperiences(uniqueExperiences);
+      
+      const uniqueJobTypes = [...new Set(jobs.filter(job => job.job_type).map(job => job.job_type))];
+      console.log('Unique job types:', uniqueJobTypes);
+      setJobTypes(uniqueJobTypes);
+      
+      const uniqueSalaryRanges = [...new Set(jobs.filter(job => job.salary_range).map(job => job.salary_range))];
+      console.log('Unique salary ranges:', uniqueSalaryRanges);
+      setSalaryRanges(uniqueSalaryRanges);
+    }
+  }, [jobs]);
+
+  useEffect(() => {
+    // Filter jobs based on search term and filters
+    let filtered = jobs.filter(job =>
       job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      (job.location && job.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (job.description && job.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
+
+    // Apply job filters
+    jobFilters.forEach(filter => {
+      if (filter.value.length > 0) {
+        switch (filter.type) {
+          case FilterType.JOB_TYPE:
+            filtered = filtered.filter(job => filter.value.includes(job.job_type));
+            break;
+          case FilterType.LOCATION:
+            filtered = filtered.filter(job => 
+              filter.value.some(location => 
+                job.location?.toLowerCase().includes(location.toLowerCase())
+              )
+            );
+            break;
+          case FilterType.EXPERIENCE:
+            filtered = filtered.filter(job => 
+              filter.value.includes(job.experience_required)
+            );
+            break;
+          case FilterType.SALARY:
+            filtered = filtered.filter(job => 
+              filter.value.includes(job.salary_range)
+            );
+            break;
+          case FilterType.SKILLS:
+            filtered = filtered.filter(job =>
+              filter.value.every(skill =>
+                job.skills?.toLowerCase().includes(skill.toLowerCase())
+              )
+            );
+            break;
+        }
+      }
+    });
+
     setFilteredJobs(filtered);
-  }, [searchTerm, jobs]);
+  }, [searchTerm, jobs, jobFilters]);
 
   const fetchJobs = async () => {
     try {
@@ -76,6 +155,7 @@ const UserDashboard = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('Fetched jobs:', data);
       setJobs(data || []);
       setFilteredJobs(data || []);
     } catch (error) {
@@ -83,6 +163,15 @@ const UserDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Reset all filters
+  const resetFilters = () => {
+    console.log('Resetting filters');
+    setLocationFilter([]);
+    setExperienceFilter([]);
+    setJobTypeFilter([]);
+    setSalaryFilter([]);
   };
 
   // Group jobs by date
@@ -112,6 +201,26 @@ const UserDashboard = () => {
     );
   };
 
+  const handleLocationChange = (loc) => {
+    setLocationFilter(prev =>
+      prev.includes(loc)
+        ? prev.filter(l => l !== loc)
+        : [...prev, loc]
+    );
+  };
+
+  const addFilter = (type: FilterType) => {
+    setJobFilters(prev => [
+      ...prev,
+      {
+        id: nanoid(),
+        type,
+        operator: FilterOperator.IS,
+        value: [],
+      },
+    ]);
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Logo watermark texture */}
@@ -123,6 +232,7 @@ const UserDashboard = () => {
           backgroundRepeat: 'repeat',
           transform: 'rotate(-10deg)',
           filter: 'grayscale(100%)',
+          pointerEvents: 'none',
         }}
       />
       
@@ -131,6 +241,7 @@ const UserDashboard = () => {
         className="fixed inset-0 w-full h-full opacity-40"
         style={{
           background: 'linear-gradient(45deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0) 100%)',
+          pointerEvents: 'none',
         }}
       />
 
@@ -169,7 +280,7 @@ const UserDashboard = () => {
           </p>
           
           {/* Search Bar */}
-          <div className="max-w-xl mx-auto relative">
+          <div className="max-w-xl mx-auto relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
               type="text"
@@ -179,8 +290,41 @@ const UserDashboard = () => {
               className="pl-10 pr-4 py-3 text-lg bg-card border-border/20 nvidia-glow"
             />
           </div>
+          
+          {/* Filter Toggle Button */}
+          <div className="flex justify-center mb-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFilters(f => !f)}
+              className="flex items-center gap-2 nvidia-glow"
+            >
+              <Filter className="w-4 h-4" />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+          </div>
+          
+          {/* Filters Section */}
+          {showFilters && (
+            <div className="max-w-4xl mx-auto mb-6">
+              <JobFilters filters={jobFilters} setFilters={setJobFilters} />
+              <div className="mt-4 flex flex-wrap gap-2">
+                {Object.values(FilterType).map((type) => (
+                  <Button
+                    key={type}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addFilter(type)}
+                    className="text-xs"
+                    disabled={jobFilters.some(f => f.type === type)}
+                  >
+                    + Add {type}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-
+        
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>

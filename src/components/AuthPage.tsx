@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, User, Shield } from 'lucide-react';
 
 const AuthPage = () => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -31,10 +33,14 @@ const AuthPage = () => {
         const expectedRole = isAdmin ? 'admin' : 'user';
         const { error } = await signIn(formData.email, formData.password, expectedRole);
         if (error) throw error;
+        
         toast({
           title: "Welcome back!",
           description: "You've been signed in successfully.",
         });
+        
+        // Navigate based on role
+        navigate(isAdmin ? '/admin' : '/dashboard');
       } else {
         // For signup, always set role as 'user'
         const { error } = await signUp(formData.email, formData.password, formData.fullName, 'user');
@@ -122,7 +128,7 @@ const AuthPage = () => {
                   onClick={() => setIsAdmin(false)}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
                     !isAdmin 
-                      ? 'bg-primary text-primary-foreground' 
+                      ? 'bg-primary text-primary-foreground shadow-sm' 
                       : 'text-muted-foreground hover:bg-secondary/30'
                   }`}
                 >
@@ -134,7 +140,7 @@ const AuthPage = () => {
                   onClick={() => setIsAdmin(true)}
                   className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-colors ${
                     isAdmin 
-                      ? 'bg-primary text-primary-foreground' 
+                      ? 'bg-primary text-primary-foreground shadow-sm' 
                       : 'text-muted-foreground hover:bg-secondary/30'
                   }`}
                 >
@@ -197,8 +203,8 @@ const AuthPage = () => {
 
               <Button 
                 type="submit" 
-                disabled={loading} 
-                className="w-full nvidia-glow"
+                disabled={loading}
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
               </Button>
@@ -218,21 +224,21 @@ const AuthPage = () => {
                 variant="outline" 
                 onClick={handleGoogleSignIn}
                 disabled={loading}
-                className="w-full nvidia-glow flex items-center justify-center gap-2 bg-background border-border/20"
+                className="w-full flex items-center justify-center gap-2 bg-background hover:bg-secondary/30 border-border/20 text-foreground"
               >
-              <img
-                src="/google.svg"
-                alt="Google"
-                className="w-5 h-5"
-              />
-              <span>Google</span>
+                <img
+                  src="/google.svg"
+                  alt="Google"
+                  className="w-5 h-5"
+                />
+                <span>Google</span>
               </Button>
 
               <div className="text-center mt-4">
                 <button
                   type="button"
                   onClick={() => setIsLogin(!isLogin)}
-                  className="text-primary hover:underline text-sm"
+                  className="text-primary hover:text-primary/90 hover:underline text-sm transition-colors"
                 >
                   {isLogin 
                     ? 'Need an account? Create one' 
