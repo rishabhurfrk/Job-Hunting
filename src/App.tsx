@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { ThemeProvider } from "./components/ThemeProvider";
-import { ThemeToggle } from "./components/ThemeToggle";
 import UserDashboard from './components/UserDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import AuthPage from './components/AuthPage';
@@ -63,9 +62,6 @@ function App() {
     <Router>
       <Toaster />
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <div className="fixed top-4 right-4 z-50">
-          <ThemeToggle />
-        </div>
         <AuthProvider>
           <AppRoutes />
         </AuthProvider>

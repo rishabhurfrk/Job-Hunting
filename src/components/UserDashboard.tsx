@@ -9,8 +9,9 @@ import { Search, Briefcase, LogOut, Filter, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { JobFilters, FilterType, FilterOperator, JobFilter } from './JobFilters';
+import { JobFilters, FilterType, FilterOperator, JobFilter, matchesExperience } from './JobFilters';
 import { nanoid } from 'nanoid';
+import { ThemeToggle } from "./ThemeToggle";
 
 // Helper function to group jobs by date
 const groupJobsByDate = (jobs: any[]) => {
@@ -114,29 +115,31 @@ const UserDashboard = () => {
       if (filter.value.length > 0) {
         switch (filter.type) {
           case FilterType.JOB_TYPE:
-            filtered = filtered.filter(job => filter.value.includes(job.job_type));
+            filtered = filtered.filter(job => job.job_type && filter.value.includes(job.job_type));
             break;
           case FilterType.LOCATION:
             filtered = filtered.filter(job => 
-              filter.value.some(location => 
-                job.location?.toLowerCase().includes(location.toLowerCase())
+              job.location && filter.value.some(location => 
+                job.location!.toLowerCase().includes(location.toLowerCase())
               )
             );
             break;
           case FilterType.EXPERIENCE:
             filtered = filtered.filter(job => 
-              filter.value.includes(job.experience_required)
+              job.experience_required && filter.value.some(selectedExpFilter =>
+                matchesExperience(job.experience_required!, selectedExpFilter)
+              )
             );
             break;
           case FilterType.SALARY:
             filtered = filtered.filter(job => 
-              filter.value.includes(job.salary_range)
+              job.salary_range && filter.value.includes(job.salary_range)
             );
             break;
           case FilterType.SKILLS:
             filtered = filtered.filter(job =>
-              filter.value.every(skill =>
-                job.skills?.toLowerCase().includes(skill.toLowerCase())
+              job.skills && filter.value.every(skill =>
+                (job.skills as any[]).map((s: string) => s.toLowerCase()).includes(skill.toLowerCase())
               )
             );
             break;
@@ -260,6 +263,7 @@ const UserDashboard = () => {
               <span className="text-sm text-muted-foreground">
                 Welcome, {profile?.full_name || profile?.email}
               </span>
+              <ThemeToggle />
               <Button variant="outline" className="nvidia-glow" onClick={signOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out

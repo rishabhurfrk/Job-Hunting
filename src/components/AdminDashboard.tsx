@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import JobCard from './JobCard';
 import { Plus, LogOut, Briefcase, Users, Activity, BarChart } from 'lucide-react';
+import { ThemeToggle } from "./ThemeToggle";
 
 const AdminDashboard = () => {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -270,6 +271,7 @@ const AdminDashboard = () => {
               <span className="text-sm text-muted-foreground">
                 Welcome, {profile?.full_name || profile?.email}
               </span>
+              <ThemeToggle />
               <Button variant="outline" className="nvidia-glow" onClick={signOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out

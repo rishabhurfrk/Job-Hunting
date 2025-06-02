@@ -74,6 +74,108 @@ export const LocationOptions = [
   "Ahmedabad",
 ];
 
+// Helper function to extract years from experience string
+export const extractYearsFromExperience = (exp: string): { min: number; max: number } => {
+  const normalized = normalizeExperience(exp);
+  
+  // Handle empty or invalid input
+  if (!normalized) {
+    return { min: 0, max: 0 };
+  }
+
+  // Check for explicit numerical mentions first
+  const numbersOnlyString = normalized.replace(/[^\d.+\- ]/g, ' ').trim();
+  let explicitMinMax = null;
+
+  if (numbersOnlyString) {
+    // Handle "X+ years" format explicitly if numbers are present
+    if (numbersOnlyString.includes('+')) {
+      const years = parseFloat(numbersOnlyString);
+      if (!isNaN(years)) explicitMinMax = { min: years, max: Number.POSITIVE_INFINITY };
+    }
+    
+    // Handle range format "X-Y years" or "X to Y years" if numbers are present
+    if (!explicitMinMax) {
+      const rangeMatch = numbersOnlyString.match(/(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)/);
+      if (rangeMatch) {
+        const min = parseFloat(rangeMatch[1]);
+        const max = parseFloat(rangeMatch[2]);
+        if(!isNaN(min) && !isNaN(max)) explicitMinMax = { min, max };
+      }
+    }
+    
+    // Handle single number format (e.g., "2 years") if numbers are present
+    if (!explicitMinMax) {
+      const singleMatch = numbersOnlyString.match(/(\d+(?:\.\d+)?)/);
+      if (singleMatch) {
+        const years = parseFloat(singleMatch[1]);
+        if(!isNaN(years)) explicitMinMax = { min: years, max: years };
+      }
+    }
+  }
+
+  // If explicit numbers are found and valid, prioritize them
+  if (explicitMinMax) {
+    return explicitMinMax;
+  }
+
+  // Keyword check for entry-level/intern roles if no valid explicit numbers were found
+  const entryLevelKeywords = ["intern", "internship", "entry level", "fresher", "trainee", "graduate trainee", "junior"];
+  const isEntryLevel = entryLevelKeywords.some(keyword => normalized.includes(keyword));
+
+  if (isEntryLevel) {
+    return { min: 0, max: 1 }; // Default to 0-1 years for these keywords
+  }
+  
+  // Fallback if no numbers or keywords are matched (should be rare with good normalization)
+  return { min: 0, max: 0 };
+};
+
+// Helper function to normalize experience strings
+export const normalizeExperience = (exp: string): string => {
+  if (!exp) return '';
+  
+  return exp.toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/years?/gi, 'years')
+    .replace(/yr?s?/gi, 'years')
+    .replace(/experience/gi, '')
+    .replace(/required/gi, '')
+    .trim();
+};
+
+// Helper function to check if a job experience matches the filter
+export const matchesExperience = (jobExp: string, filterExp: string): boolean => {
+  if (!jobExp || !filterExp) return false;
+  
+  const normalizedJobExp = normalizeExperience(jobExp);
+  const normalizedFilterExp = normalizeExperience(filterExp);
+  
+  const jobYears = extractYearsFromExperience(normalizedJobExp);
+  const filterYears = extractYearsFromExperience(normalizedFilterExp);
+  
+  // For debugging
+  console.log('Job Experience:', {
+    original: jobExp,
+    normalized: normalizedJobExp,
+    years: jobYears
+  });
+  console.log('Filter Experience:', {
+    original: filterExp,
+    normalized: normalizedFilterExp,
+    years: filterYears
+  });
+  
+  // Check if ranges overlap
+  const hasOverlap = (
+    jobYears.min <= filterYears.max && 
+    jobYears.max >= filterYears.min
+  );
+  
+  console.log('Match result:', hasOverlap);
+  return hasOverlap;
+};
+
 export const ExperienceOptions = [
   "0-1 Years",
   "1-2 Years",
@@ -181,9 +283,9 @@ const FilterValueCombobox = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Filter options based on search
+  // Filter options based on search - case insensitive
   const filteredOptions = options.filter(option =>
-    option.toLowerCase().includes(search.toLowerCase())
+    normalizeExperience(option).includes(normalizeExperience(search))
   );
 
   return (
@@ -286,4 +388,4 @@ export function JobFilters({
       ))}
     </div>
   );
-} 
+}
